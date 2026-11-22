@@ -1,0 +1,3 @@
+# Instala as dependencias do cliente e do servidor.
+-r MCP_CLIENT/mcp_client/requirements.txt
+-r MCP_SERVER/mcp_server/requirements.txt

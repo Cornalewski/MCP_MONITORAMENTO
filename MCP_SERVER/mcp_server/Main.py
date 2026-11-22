@@ -1,0 +1,108 @@
+import asyncio
+import cpuinfo as ci
+from fastmcp import FastMCP
+import psutil as ps
+import platform
+from pathlib import Path
+
+
+from .Models import (
+    CPUUsage,
+    RootAvailable,
+    RootSize,
+    KernelVersion,
+    RAMAvailable,
+    TaskCount,
+    CPUInfo
+)
+
+mcp = FastMCP(
+    name="System Information about the current server",
+    instructions="Provides information about the current server, including its hostname, IP address, and operating system and other hardware information.",
+)
+
+def get_root_path() -> str:
+    return Path.cwd().anchor
+
+
+@mcp.tool(name="availableRoot")
+def available_root() -> RootAvailable:
+    """Retorna o espaço disponível no sistema de arquivos raiz."""
+    root = get_root_path()
+
+    return RootAvailable(
+        path=root,
+        available_bytes=ps.disk_usage(root).free,
+    )
+
+
+@mcp.tool(name="sizeRoot")
+def size_root() -> RootSize:
+    """Retorna a capacidade total do sistema de arquivos raiz."""
+    root = get_root_path()
+
+    return RootSize(
+        path=root,
+        total_bytes=ps.disk_usage(root).total,
+    )
+
+
+@mcp.tool(name="kernelVersion")
+def kernel_version() -> KernelVersion:
+    """Retorna o sistema operacional e seu release; no Linux, versão do kernel."""
+    return KernelVersion(
+        system=platform.system(),
+        release=platform.release(),
+    )
+
+
+@mcp.tool(name="availableRAM")
+def available_ram() -> RAMAvailable:
+    """Retorna a quantidade de memória RAM disponível."""
+    return RAMAvailable(
+        available_bytes=ps.virtual_memory().available,
+    )
+
+
+@mcp.tool(name="tasks")
+def tasks() -> TaskCount:
+    """Retorna a quantidade de processos existentes, sem contar threads à parte."""
+    return TaskCount(
+        process_count=len(ps.pids()),
+    )
+
+
+@mcp.tool(name="cpuUsage")
+def cpu_usage() -> CPUUsage:
+    """Mede o uso médio da CPU e por processador lógico durante 1 segundo."""
+    per_cpu = ps.cpu_percent(interval=1.0, percpu=True)
+
+    return CPUUsage(
+        average_percent=round(sum(per_cpu) / len(per_cpu), 2),
+        per_cpu_percent=per_cpu,
+        logical_cpus=len(per_cpu),
+        physical_cores=ps.cpu_count(logical=False),
+        sample_seconds=1.0,
+    )
+
+@mcp.tool()
+def get_cpu_details() -> CPUInfo:
+    """Retorna identificação e características do processador do servidor.
+
+    Campos indisponíveis são retornados como null.
+    """
+    return CPUInfo(**ci.get_cpu_info())
+
+
+async def run_server() -> None:
+    """Run the MCP server asynchronously over HTTP."""
+    await mcp.run_async(transport="http", host="127.0.0.1", port=9000)
+
+
+def main() -> None:
+    """Start the async MCP server from the package's console entry point."""
+    asyncio.run(run_server())
+
+
+if __name__ == "__main__":
+    main()

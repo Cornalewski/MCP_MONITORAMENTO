@@ -1,0 +1,6 @@
+# O cliente usa langchain.mcp.MCPAdapter, integrado ao FastMCP.
+langchain[mcp]==1.4.10
+langchain-core==1.7.7
+langchain-openai==1.7.4
+fastmcp==4.1.8
+mcp==2.3.0
