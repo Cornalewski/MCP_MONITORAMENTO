@@ -23,8 +23,8 @@ MCP_MONITORAMENTO/
 │       ├── __init__.py
 │       ├── Main.py                     # Servidor e ferramentas MCP
 │       ├── Models.py                   # Modelos Pydantic das respostas
-|       └── requirements.txt            # Dependências do Servidor
-|       
+│       └── requirements.txt            # Dependências do servidor
+│
 └── MCP_CLIENT/
     └── mcp_client/
         ├── main.py                     # Agente e conversa pelo terminal
@@ -33,7 +33,19 @@ MCP_MONITORAMENTO/
 
 ## 1. Instalar as dependências
 
-No PowerShell, entre na pasta do projeto e crie um ambiente virtual na raiz:
+Abra um terminal na raiz de `MCP_MONITORAMENTO`, onde estão este README e o `requirements.txt`. Escolha os comandos do seu sistema operacional.
+
+### Linux e macOS — Bash ou Zsh
+
+```bash
+python3 --version
+python3 -m venv .venv
+./.venv/bin/python -m pip install --upgrade pip
+./.venv/bin/python -m pip install -r requirements.txt
+./.venv/bin/python -m pip check
+```
+
+### Windows — PowerShell
 
 ```powershell
 python --version
@@ -43,13 +55,21 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pip check
 ```
 
-Os comandos usam o Python do ambiente virtual diretamente; não é necessário ativá-lo nem alterar a política de execução do PowerShell. Use esse mesmo ambiente nos dois terminais abaixo, inclusive se existir outro `.venv` dentro de `MCP_CLIENT`.
-
-O requirements da raiz inclui o arquivo de dependências do cliente. A integração utilizada é `langchain.mcp.MCPAdapter`; `langchain-mcp-adapters` não faz parte da instalação. A versão antiga desse pacote exige `mcp < 2` e conflita com o MCP 2 usado neste ambiente.
-
 ## 2. Iniciar o servidor — terminal 1
 
+Abra um terminal na raiz do projeto e escolha os comandos do seu sistema:
+
+### Linux e macOS — Bash ou Zsh
+
+```bash
+cd MCP_SERVER
+../.venv/bin/python -m mcp_server.Main
+```
+
+### Windows — PowerShell
+
 ```powershell
+cd MCP_SERVER
 ..\.venv\Scripts\python.exe -m mcp_server.Main
 ```
 
@@ -59,9 +79,20 @@ Execute como módulo, respeitando a letra maiúscula de `Main`. Isso permite que
 
 ## 3. Iniciar o cliente — terminal 2
 
-Em outro PowerShell, configure a chave e inicie a conversa:
+Abra outro terminal na raiz do projeto, configure a chave e inicie a conversa:
+
+### Linux e macOS — Bash ou Zsh
+
+```bash
+cd MCP_CLIENT
+export OPENAI_API_KEY='SUBSTITUA_PELA_SUA_CHAVE'
+../.venv/bin/python -m mcp_client.main
+```
+
+### Windows — PowerShell
 
 ```powershell
+cd MCP_CLIENT
 $env:OPENAI_API_KEY = 'SUBSTITUA_PELA_SUA_CHAVE'
 ..\.venv\Scripts\python.exe -m mcp_client.main
 ```
@@ -95,13 +126,21 @@ Digite `quit` para sair. Para encerrar o servidor, pressione `Ctrl+C` no termina
 
 `cpuUsage` mede uma janela de um segundo; cada consulta leva aproximadamente esse tempo. Os valores são porcentagens de utilização, sem histórico de vários minutos. `systemLoad` foi substituída por essa ferramenta.
 
-No Linux, a raiz consultada é `/`. No Windows, é a raiz da unidade do diretório atual, como `C:\`. Os números se referem ao sistema de arquivos dessa raiz, não à soma de todos os discos da máquina.
+No Linux e no macOS, a raiz consultada é `/`. No Windows, é a raiz da unidade do diretório atual, como `C:\`. Os números se referem ao sistema de arquivos dessa raiz, não à soma de todos os discos da máquina. No macOS, `kernelVersion` identifica o sistema como `Darwin` e retorna o release do kernel Darwin, que é diferente da versão comercial do macOS.
 
 As respostas são modelos Pydantic. As descrições dos campos ficam no esquema de saída das ferramentas. Os valores indisponíveis de campos opcionais são retornados como `null`.
 
 ## Conferir a conexão sem chamar o modelo
 
 Com o servidor aberto, execute a partir da raiz do projeto:
+
+### Linux e macOS — Bash ou Zsh
+
+```bash
+./.venv/bin/python -c "import asyncio; from langchain.mcp import MCPAdapter; tools = asyncio.run(MCPAdapter('http://localhost:9000/mcp').list_tools()); print([tool.name for tool in tools])"
+```
+
+### Windows — PowerShell
 
 ```powershell
 .\.venv\Scripts\python.exe -c "import asyncio; from langchain.mcp import MCPAdapter; tools = asyncio.run(MCPAdapter('http://localhost:9000/mcp').list_tools()); print([tool.name for tool in tools])"
