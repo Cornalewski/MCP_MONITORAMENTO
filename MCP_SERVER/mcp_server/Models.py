@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field
 
-
 class CPUInfo(BaseModel):
     brand_raw: str | None = Field(
         default=None,
@@ -99,3 +98,20 @@ class SystemLoad(BaseModel):
     average_1m: float = Field(description="Carga média no último minuto.")
     average_5m: float = Field(description="Carga média nos últimos 5 minutos.")
     average_15m: float = Field(description="Carga média nos últimos 15 minutos.")
+
+class ProcessInfo(BaseModel):
+    pid: int = Field(description="Identificador do processo.")
+    name: str = Field(description="Nome do processo.")
+
+    cpu_percent: float = Field(
+        ge=0,
+        description=(
+            "Uso de CPU durante a amostra. "
+            "100% equivale a uma CPU lógica; pode ultrapassar 100%."
+        ),
+    )
+
+    memory_bytes: int = Field(
+        ge=0,
+        description="Memória residente (RSS) do processo, em bytes.",
+    )

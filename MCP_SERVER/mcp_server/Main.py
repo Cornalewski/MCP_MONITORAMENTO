@@ -4,6 +4,9 @@ from fastmcp import FastMCP
 import psutil as ps
 import platform
 from pathlib import Path
+import time
+from typing import Annotated, Literal
+from pydantic import Field
 
 
 from .Models import (
@@ -14,7 +17,8 @@ from .Models import (
     RAMAvailable,
     TaskCount,
     CPUInfo,
-    SystemLoad
+    SystemLoad,
+    ProcessInfo
 )
 
 mcp = FastMCP(
@@ -104,6 +108,64 @@ def system_load() -> SystemLoad:
         average_5m=five,
         average_15m=fifteen,
     )
+
+@mcp.tool(name="topProcesses")
+def top_processes(
+    limit: Annotated[
+        int,
+        Field(
+            ge=1,
+            le=50,
+            description="Quantidade máxima de processos retornados.",
+        ),
+    ] = 5,
+    order: Literal["cpu", "memory"] = "cpu",
+) -> list[ProcessInfo]:
+    """Retorna os processos que mais usam CPU ou RAM.
+
+    A utilização de CPU é medida durante aproximadamente 1 segundo.
+    """
+    tracked = []
+
+    # Inicia a medição de todos os processos.
+    for pid in ps.pids():
+        try:
+            process = ps.Process(pid)
+            process.cpu_percent(interval=None)
+            tracked.append(process)
+        except (ps.NoSuchProcess, ps.AccessDenied):
+            continue
+
+    # Espera uma única vez para toda a coleta.
+    time.sleep(1.0)
+
+    results = []
+
+    for process in tracked:
+        try:
+            results.append(
+                ProcessInfo(
+                    pid=process.pid,
+                    name=process.name(),
+                    cpu_percent=process.cpu_percent(interval=None),
+                    memory_bytes=process.memory_info().rss,
+                )
+            )
+        except (ps.NoSuchProcess, ps.AccessDenied):
+            continue
+
+    if order == "cpu":
+        return sorted(
+            results,
+            key=lambda item: item.cpu_percent,
+            reverse=True,
+        )[:limit]
+
+    return sorted(
+        results,
+        key=lambda item: item.memory_bytes,
+        reverse=True,
+    )[:limit]
 
 
 async def run_server() -> None:
