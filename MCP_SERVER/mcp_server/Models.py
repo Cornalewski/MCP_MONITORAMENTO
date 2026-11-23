@@ -94,3 +94,8 @@ class CPUUsage(BaseModel):
     sample_seconds: float = Field(
         description="Duração da amostra utilizada na medição, em segundos.",
     )
+    
+class SystemLoad(BaseModel):
+    average_1m: float = Field(description="Carga média no último minuto.")
+    average_5m: float = Field(description="Carga média nos últimos 5 minutos.")
+    average_15m: float = Field(description="Carga média nos últimos 15 minutos.")

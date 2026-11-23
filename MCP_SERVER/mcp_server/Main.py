@@ -13,7 +13,8 @@ from .Models import (
     KernelVersion,
     RAMAvailable,
     TaskCount,
-    CPUInfo
+    CPUInfo,
+    SystemLoad
 )
 
 mcp = FastMCP(
@@ -85,13 +86,24 @@ def cpu_usage() -> CPUUsage:
         sample_seconds=1.0,
     )
 
-@mcp.tool()
-def get_cpu_details() -> CPUInfo:
+@mcp.tool(name="cpuName")
+def cpu_name() -> CPUInfo:
     """Retorna identificação e características do processador do servidor.
 
     Campos indisponíveis são retornados como null.
     """
     return CPUInfo(**ci.get_cpu_info())
+
+@mcp.tool(name="systemLoad")
+def system_load() -> SystemLoad:
+    """Retorna a carga média em 1, 5 e 15 minutos. Os valores não são percentuais."""
+    one, five, fifteen = ps.getloadavg()
+
+    return SystemLoad(
+        average_1m=one,
+        average_5m=five,
+        average_15m=fifteen,
+    )
 
 
 async def run_server() -> None:
